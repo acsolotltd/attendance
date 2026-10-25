@@ -1,0 +1,11 @@
+services:
+  app:
+    build: .
+    env_file: .env
+    ports:
+      - "8000:8000"        # devices (HTTP) and, behind a proxy, the UI
+    volumes:
+      - data:/data         # SQLite database + cache; back it up
+    restart: unless-stopped
+volumes:
+  data:

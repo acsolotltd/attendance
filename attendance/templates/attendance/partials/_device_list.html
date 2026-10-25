@@ -1,0 +1,28 @@
+{% for d in devices %}
+<div id="device-row-{{ d.id }}" class="row-card">
+  <div class="flex flex-wrap items-center gap-3">
+    <input type="checkbox" name="devices" value="{{ d.id }}" form="export-form" checked class="h-4 w-4 rounded border-slate-300" aria-label="Include {{ d.name }}">
+    <div class="min-w-0 flex-1">
+      <div class="flex flex-wrap items-center gap-1.5 text-sm font-medium text-slate-900"><span class="truncate">{{ d.name }}</span>
+        {% if d.is_demo %}<span class="badge badge-demo">DEMO</span>{% endif %}
+        {% if d.mode == "adms" %}<span class="badge badge-adms">ADMS</span>{% else %}<span class="badge badge-pull">PULL</span>{% endif %}
+      </div>
+      <div class="text-xs text-slate-500">
+        {% if d.mode == "adms" %}SN {{ d.serial_number }}{% else %}{{ d.ip_address }}:{{ d.port }} · {{ d.protocol|upper }}{% endif %}{% if d.log_count %} · {{ d.log_count }} stored{% endif %}{% if d.last_sync_at %} · synced {{ d.last_sync_at|date:"Y-m-d H:i" }}{% endif %}
+      </div>
+    </div>
+    {% include "attendance/partials/_status.html" with device=d online=None %}
+    <div class="flex items-center">
+      <button type="button" hx-get="{% url 'device_test' d.id %}" hx-target="#info-{{ d.id }}" hx-swap="innerHTML" hx-disabled-elt="this"
+              hx-on::before-request="document.getElementById('info-{{ d.id }}').textContent='Working…'" class="btn btn-ghost">{% if d.mode == "adms" %}Details{% else %}Test{% endif %}</button>
+      <button type="button" hx-get="{% url 'device_edit' d.id %}" hx-target="#device-row-{{ d.id }}" hx-swap="outerHTML" class="btn btn-ghost">Edit</button>
+      <button type="button" hx-post="{% url 'device_delete' d.id %}" hx-confirm="Remove {{ d.name }} and its stored logs?" hx-target="#device-list" hx-swap="innerHTML" class="btn btn-danger">Remove</button>
+    </div>
+  </div>
+  <div id="info-{{ d.id }}" class="text-xs text-slate-500"></div>
+</div>
+{% empty %}
+<div class="rounded-xl border border-dashed border-slate-300 p-6 text-center text-sm text-slate-500">
+  No devices yet. Point an ADMS device at this server, add a pull device below, or try a <b>Demo device</b>.
+</div>
+{% endfor %}

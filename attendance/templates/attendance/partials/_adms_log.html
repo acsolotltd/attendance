@@ -1,0 +1,21 @@
+{% if logs %}
+<div class="tbl-wrap max-h-80">
+  <table class="tbl">
+    <thead><tr><th>Time</th><th>SN</th><th>Request</th><th>Status</th><th>Body</th><th>Answer</th></tr></thead>
+    <tbody>
+      {% for l in logs %}
+      <tr>
+        <td class="whitespace-nowrap">{{ l.created_at|date:"H:i:s" }}</td>
+        <td>{{ l.serial|default:"—" }}</td>
+        <td><b>{{ l.method }}</b> <span class="break-all text-slate-500" title="{{ l.path }}">{{ l.path|truncatechars:70 }}</span></td>
+        <td class="{% if l.status >= 400 %}font-semibold text-red-600{% endif %}">{{ l.status }}</td>
+        <td class="text-slate-600" title="{{ l.body_preview }}">{{ l.body_preview|truncatechars:80 }}</td>
+        <td class="text-slate-600" title="{{ l.response_preview }}">{{ l.response_preview|truncatechars:50 }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="text-xs text-slate-500">No device has contacted this server yet.</p>
+{% endif %}

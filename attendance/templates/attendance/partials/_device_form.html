@@ -1,0 +1,19 @@
+<div id="{{ wrapper_id }}" {% if oob %}hx-swap-oob="true"{% endif %} class="{% if device %}panel-inline{% else %}mt-3{% endif %}">
+  <form hx-post="{{ action }}" hx-target="#device-list" hx-swap="innerHTML" class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+    {% if form.non_field_errors %}<div class="alert alert-err col-span-full">{{ form.non_field_errors }}</div>{% endif %}
+    {% for field in form %}
+    {% if field.name == "punch_state_unused" %}
+    <label class="col-span-full flex items-center gap-2 text-xs text-slate-600">{{ field }} {{ field.label }}</label>
+    {% else %}
+    <label class="field{% if field.name == 'serial_number' or field.name == 'trans_profile' %} adms-only{% elif field.name == 'ip_address' or field.name == 'port' or field.name == 'comm_key' or field.name == 'timeout' or field.name == 'protocol' or field.name == 'encoding' %} pull-only{% endif %}">
+      <span class="lbl">{{ field.label }}</span>{{ field }}
+      {% for e in field.errors %}<span class="field-err">{{ e }}</span>{% endfor %}
+    </label>
+    {% endif %}
+    {% endfor %}
+    <div class="col-span-full flex items-center gap-3">
+      <button class="btn btn-primary">{% if device %}Save changes{% else %}Add device{% endif %}</button>
+      {% if device %}<button type="button" hx-get="{% url 'device_list' %}" hx-target="#device-list" hx-swap="innerHTML" class="btn btn-ghost">Cancel</button>{% endif %}
+    </div>
+  </form>
+</div>

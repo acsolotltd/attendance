@@ -1,0 +1,57 @@
+{% if form_errors %}
+  <div class="alert alert-err">{% for errs in form_errors %}{% for e in errs %}<div>{{ e }}</div>{% endfor %}{% endfor %}</div>
+{% else %}
+<div class="space-y-4">
+  <div class="flex flex-wrap gap-2">
+    {% for s in summary %}
+      <span class="chip {% if s.error %}chip-err{% endif %}">{{ s.name }}: {% if s.error %}failed{% else %}{{ s.count }} in range{% if s.source == "device" %} · {{ s.on_device }} on device · {{ s.elapsed }}s{% endif %}{% endif %}</span>
+    {% endfor %}
+  </div>
+  {% for s in summary %}
+    {% if s.error %}<div class="alert alert-err"><strong>{{ s.name }}</strong> — {{ s.error }}</div>
+    {% elif s.duplicates or s.new_saved is not None %}<div class="text-xs text-slate-500">{{ s.name }}:{% if s.duplicates %} {{ s.duplicates }} duplicate log(s) removed.{% endif %}{% if s.new_saved is not None %} {{ s.new_saved }} new record(s) saved to local database.{% endif %}</div>{% endif %}
+  {% endfor %}
+
+  <p class="text-sm text-slate-600">
+    <b>{{ total }}</b> record{{ total|pluralize }} · {{ stats.users }} user{{ stats.users|pluralize }} · {{ stats.days }} day{{ stats.days|pluralize }}
+    ({% if source == "db" %}from local database{% else %}live from devices{% endif %}){% if total > limit %} — showing first {{ limit }}{% endif %}.
+  </p>
+
+  {% if shift_rows is not None %}
+  <div class="rounded-xl border border-violet-200 bg-violet-50/60 p-4">
+    <h3 class="text-sm font-semibold text-violet-900">Shift report — {{ shift_total }} row{{ shift_total|pluralize }}</h3>
+    {% if shift_stats.users_without_shift %}<p class="alert alert-warn mt-2">No shift assigned (and no default): {{ shift_stats.users_without_shift|join:", " }}</p>{% endif %}
+    {% if shift_stats.unmatched_punches %}<p class="alert alert-warn mt-2">{{ shift_stats.unmatched_punches }} punch(es) fell outside every shift window and were not counted.</p>{% endif %}
+    {% if shift_rows %}
+    <div class="tbl-wrap mt-3 max-h-80">
+      <table class="tbl">
+        <thead><tr><th>Date</th><th>Employee</th><th>Shift</th><th>In</th><th>Out</th><th>Late</th><th>Early</th><th>OT</th><th>Hours</th><th>Status</th></tr></thead>
+        <tbody>
+          {% for r in shift_rows %}
+          <tr class="{% if r.status == 'Absent' %}row-absent{% endif %}">
+            <td class="whitespace-nowrap">{{ r.date|date:"Y-m-d" }}</td><td>{{ r.uid }}{% if r.name %} · {{ r.name }}{% endif %}</td><td>{{ r.shift }}</td>
+            <td class="whitespace-nowrap">{% if r.in %}{{ r.in|date:"m-d H:i" }}{% else %}—{% endif %}</td><td class="whitespace-nowrap">{% if r.out %}{{ r.out|date:"m-d H:i" }}{% else %}—{% endif %}</td>
+            <td>{{ r.late_min|default:"" }}</td><td>{{ r.early_min|default:"" }}</td><td>{{ r.ot_min|default:"" }}</td>
+            <td>{{ r.hours|default_if_none:"" }}</td><td class="{% if r.status != 'On time' %}font-medium{% endif %}">{{ r.status }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if records %}
+  <div class="tbl-wrap max-h-[28rem]">
+    <table class="tbl">
+      <thead><tr><th>Device</th><th>User ID</th><th>Name</th><th>Date</th><th>Time</th><th>Punch</th><th>Verify</th></tr></thead>
+      <tbody>
+        {% for r in records %}
+        <tr><td>{{ r.device }}</td><td>{{ r.user_id }}</td><td>{{ r.name }}</td><td>{{ r.timestamp|date:"Y-m-d" }}</td><td>{{ r.timestamp|date:"H:i:s" }}</td><td>{{ r.punch }}</td><td>{{ r.verify }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endif %}

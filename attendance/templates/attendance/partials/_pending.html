@@ -1,0 +1,8 @@
+{% for p in pending %}
+<div class="alert alert-warn flex flex-wrap items-center justify-between gap-3">
+  <div><b>Unregistered device calling in:</b> serial <code class="font-semibold">{{ p.serial }}</code>{% if p.ip %} from {{ p.ip }}{% endif %}.
+    <span class="text-amber-700/80">It keeps its punches and retries; they upload once you register it.</span></div>
+  <button type="button" class="btn btn-primary" hx-post="{% url 'device_register' %}" hx-vals='{"serial": "{{ p.serial }}"}'
+          hx-target="#device-list" hx-swap="innerHTML">Register</button>
+</div>
+{% endfor %}

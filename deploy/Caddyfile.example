@@ -1,0 +1,12 @@
+# HTTPS for people, plain HTTP for devices (most ZKTeco firmware cannot do TLS or follow redirects).
+# Set DJANGO_HTTPS=1, DJANGO_BEHIND_PROXY=1 and the server IP in DJANGO_ALLOWED_HOSTS.
+
+hr.example.com {
+    reverse_proxy app:8000
+}
+
+http://203.0.113.10:8000 {
+    @device path /iclock/* /healthz
+    reverse_proxy @device app:8000
+    respond "not found" 404
+}

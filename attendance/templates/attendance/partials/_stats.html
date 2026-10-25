@@ -1,0 +1,8 @@
+<div class="grid grid-cols-2 gap-3 lg:grid-cols-4">
+  <div class="card stat"><div class="k">Devices</div><div class="v">{{ s.devices }}</div><div class="s">{{ s.adms }} ADMS · {{ s.pull }} pull</div></div>
+  <div class="card stat"><div class="k">ADMS online</div><div class="v">{{ s.adms_online }}<span class="text-base font-medium text-slate-400"> / {{ s.adms }}</span></div>
+    <div class="s">{% if s.adms %}heard from in the last 2½ min{% else %}no push devices yet{% endif %}</div></div>
+  <div class="card stat"><div class="k">Punches today</div><div class="v">{{ s.punches_today }}</div><div class="s">in the local database</div></div>
+  <div class="card stat"><div class="k">Stored punches</div><div class="v">{{ s.punches_total }}</div>
+    <div class="s">{% if s.last_punch %}latest {{ s.last_punch|date:"Y-m-d H:i" }}{% else %}nothing stored yet{% endif %}</div></div>
+</div>

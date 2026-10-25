@@ -1,0 +1,9 @@
+<div class="space-y-2">
+  <h3 class="text-sm font-semibold">Sync complete</h3>
+  {% for s in summary %}
+    {% if s.error %}<div class="alert alert-err"><strong>{{ s.name }}</strong> — {{ s.error }}</div>
+    {% elif s.note %}<div class="alert alert-info"><strong>{{ s.name }}</strong> — {{ s.note }}</div>
+    {% else %}<div class="alert alert-ok"><strong>{{ s.name }}</strong> — {{ s.on_device }} records on device, {{ s.new_saved }} new saved{% if s.duplicates %}, {{ s.duplicates }} duplicates removed{% endif %} ({{ s.elapsed }}s)</div>{% endif %}
+  {% endfor %}
+  <p class="text-xs text-slate-500">Choose “Local database” as the data source to report from these saved logs without touching the devices.</p>
+</div>

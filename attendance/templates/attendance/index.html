@@ -1,0 +1,115 @@
+{% extends "attendance/base.html" %}
+{% block content %}
+
+<section id="overview" class="space-y-4">
+  <div id="stats" hx-get="{% url 'stats' %}" hx-trigger="load, every 60s" hx-swap="innerHTML">
+    <div class="grid grid-cols-2 gap-3 lg:grid-cols-4">{% for i in "1234" %}<div class="card stat"><div class="k">Loading</div><div class="v">…</div></div>{% endfor %}</div>
+  </div>
+  <div id="pending" hx-get="{% url 'pending' %}" hx-trigger="load, every 15s, refreshPending from:body" hx-swap="innerHTML"></div>
+</section>
+
+<section id="devices" class="card p-5">
+  <div class="mb-4 flex flex-wrap items-start justify-between gap-3">
+    <div>
+      <h2 class="section-title"><span class="ico">{% include "attendance/partials/_icon.html" with name="device" %}</span>Devices</h2>
+      <p class="section-sub"><b>Pull</b>: this server connects to the device. <b>ADMS</b>: the device pushes to this server (no port forwarding on its side).</p>
+    </div>
+    <div class="flex flex-wrap items-center gap-1">
+      <button type="button" onclick="toggleDevices(true)" class="btn btn-ghost">Select all</button>
+      <button type="button" onclick="toggleDevices(false)" class="btn btn-ghost">None</button>
+      <button type="button" hx-post="{% url 'device_add_demo' %}" hx-target="#device-list" hx-swap="innerHTML" class="btn btn-secondary">+ Demo device</button>
+    </div>
+  </div>
+
+  <div id="device-list" class="space-y-2.5">
+    {% include "attendance/partials/_device_list.html" %}
+  </div>
+
+  <details class="mt-4 rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+    <summary class="btn-link">+ Add a device manually</summary>
+    {% include "attendance/partials/_device_form.html" %}
+  </details>
+  <details class="mt-2 text-xs text-slate-600">
+    <summary class="btn-link">How to point an ADMS device at this server</summary>
+    <ol class="mt-2 list-decimal space-y-1 pl-5">
+      <li>On the device: <b>Menu &rarr; Comm. &rarr; Cloud Server Setting</b> (ADMS).</li>
+      <li>Server address: this server's public IP or domain (not 127.0.0.1). Port: <b>{{ adms_port }}</b> (the port this app is served on).</li>
+      <li>Within a minute the device shows up in the yellow <b>Unregistered device</b> box above: click Register.</li>
+    </ol>
+  </details>
+</section>
+
+<section id="reports" class="card p-5">
+  <div class="mb-4">
+    <h2 class="section-title"><span class="ico">{% include "attendance/partials/_icon.html" with name="report" %}</span>Reports &amp; export</h2>
+    <p class="section-sub">Pick devices above, choose dates, preview with <b>Filter</b>, then download.</p>
+  </div>
+  <form id="export-form" method="post" action="{% url 'export' %}" class="space-y-5">
+    {% csrf_token %}
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <label class="field"><span class="lbl">Start date</span><input type="date" name="start_date" value="{{ start_default }}" required class="input"></label>
+      <label class="field"><span class="lbl">End date</span><input type="date" name="end_date" value="{{ end_default }}" required class="input"></label>
+      <label class="field"><span class="lbl">Employee ID(s) / name <span class="font-normal text-slate-400">(optional)</span></span><input type="text" name="user_query" placeholder="101, 105, Sade" class="input"></label>
+    </div>
+    <div class="flex flex-wrap items-center gap-1 text-xs">
+      <span class="mr-1 text-slate-500">Quick range</span>
+      <button type="button" onclick="setRange('today')" class="btn btn-ghost">Today</button>
+      <button type="button" onclick="setRange('yesterday')" class="btn btn-ghost">Yesterday</button>
+      <button type="button" onclick="setRange('last7')" class="btn btn-ghost">Last 7 days</button>
+      <button type="button" onclick="setRange('month')" class="btn btn-ghost">This month</button>
+      <button type="button" onclick="setRange('lastmonth')" class="btn btn-ghost">Last month</button>
+    </div>
+    <div class="grid grid-cols-1 gap-4 text-sm md:grid-cols-3">
+      <fieldset class="space-y-1.5"><legend class="mb-1 font-medium">Data source</legend>
+        <label class="flex items-center gap-2"><input type="radio" name="source" value="live" checked> Live from pull devices</label>
+        <label class="flex items-center gap-2"><input type="radio" name="source" value="db"> Local database (already stored)</label>
+        <label class="flex items-center gap-2 text-slate-500"><input type="checkbox" name="save_copy" checked> Keep a copy of downloaded logs</label>
+        <p class="text-xs text-slate-400">ADMS devices always read from the database.</p>
+      </fieldset>
+      <fieldset class="space-y-1.5"><legend class="mb-1 font-medium">Include</legend>
+        <label class="flex items-start gap-2"><input type="checkbox" name="shift_report" checked class="mt-1"> <span>Shift report <span class="block text-xs text-slate-400">lateness, overtime, absences, night shifts</span></span></label>
+      </fieldset>
+      <label class="field text-sm"><span class="lbl text-sm font-medium text-slate-800">Format</span>
+        <select name="fmt" class="input"><option value="xlsx">Excel (.xlsx) — all sheets</option><option value="csv">CSV (.csv) — raw punches</option></select></label>
+    </div>
+    <div class="flex flex-wrap items-center gap-2.5">
+      <button type="button" hx-post="{% url 'preview' %}" hx-include="#export-form" hx-target="#results" hx-indicator="#spinner" hx-disabled-elt="this" class="btn btn-secondary">Filter</button>
+      <button type="submit" class="btn btn-success">Export</button>
+      <button type="button" hx-post="{% url 'sync' %}" hx-include="#export-form" hx-target="#results" hx-indicator="#spinner" hx-disabled-elt="this" class="btn btn-ghost"
+              title="Download the complete log from the selected pull devices into the local database">Sync full log</button>
+      <span id="spinner" class="htmx-indicator text-xs text-slate-500"><span class="spinner"></span> Working… large logs can take a while.</span>
+    </div>
+  </form>
+  <div id="results" class="mt-5"></div>
+</section>
+
+<section id="shifts" class="card p-5">
+  <div class="mb-4">
+    <h2 class="section-title"><span class="ico">{% include "attendance/partials/_icon.html" with name="shift" %}</span>Shifts (day / night / rotating)</h2>
+    <p class="section-sub">Applied here, on the server, to the punches devices record — so night shifts that end after midnight work on every device.</p>
+  </div>
+  <div id="shifts-panel" hx-get="{% url 'shifts_panel' %}" hx-trigger="load" hx-swap="innerHTML"><span class="text-xs text-slate-500">Loading…</span></div>
+</section>
+
+<section id="activity" class="card p-5">
+  <details>
+    <summary class="section-title"><span class="ico">{% include "attendance/partials/_icon.html" with name="pulse" %}</span>Device activity (ADMS requests)</summary>
+    <p class="section-sub mb-3 mt-2">The latest requests devices sent here and what we answered. Start here if a device doesn't show up or sends no punches.</p>
+    <div id="adms-log" hx-get="{% url 'adms_log' %}" hx-trigger="load, every 10s" hx-swap="innerHTML"></div>
+  </details>
+</section>
+
+<script>
+function toggleDevices(on){document.querySelectorAll('input[name=devices]').forEach(function(c){c.checked=on;});}
+function setRange(kind){
+  var f=function(x){return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');};
+  var t=new Date(), s=new Date(t), e=new Date(t);
+  if(kind==='yesterday'){s.setDate(t.getDate()-1);e=new Date(s);}
+  if(kind==='last7'){s.setDate(t.getDate()-6);}
+  if(kind==='month'){s=new Date(t.getFullYear(),t.getMonth(),1);}
+  if(kind==='lastmonth'){s=new Date(t.getFullYear(),t.getMonth()-1,1);e=new Date(t.getFullYear(),t.getMonth(),0);}
+  document.querySelector('[name=start_date]').value=f(s);
+  document.querySelector('[name=end_date]').value=f(e);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% load static %}<!doctype html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Attendance Hub</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%234f46e5'/%3E%3Cpath d='M16 7a7 7 0 0 0-7 7v3M16 11a3 3 0 0 0-3 3v6M16 11a3 3 0 0 1 3 3v2M23 14v1a7 7 0 0 1-3 6' stroke='white' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+  {% if assets_built %}
+  <link rel="stylesheet" href="{% static 'attendance/tailwind.css' %}">
+  <script src="{% static 'attendance/htmx.min.js' %}" defer></script>
+  {% else %}
+  <!-- Development fallback. For production run `npm install && npm run build` (the Dockerfile does it). -->
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  {% endif %}
+  <link rel="stylesheet" href="{% static 'attendance/app.css' %}">
+</head>
+<body class="min-h-full bg-slate-50 text-slate-800" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
+  <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
+    <div class="mx-auto flex max-w-6xl flex-wrap items-center gap-x-5 gap-y-2 px-4 py-3">
+      <a href="/" class="flex items-center gap-2.5 font-semibold text-slate-900">
+        <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white">
+          <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5a6 6 0 0 0-6 6v3M12 9a2.5 2.5 0 0 0-2.5 2.5V16M12 9a2.5 2.5 0 0 1 2.5 2.5v1.5M18 11v1a6 6 0 0 1-2.5 4.9"/></svg>
+        </span>
+        Attendance Hub
+      </a>
+      {% if user.is_authenticated %}
+      <nav class="order-last flex w-full gap-1 overflow-x-auto md:order-none md:w-auto" aria-label="Sections">
+        <a class="nav-link" href="/#overview">Overview</a><a class="nav-link" href="/#devices">Devices</a>
+        <a class="nav-link" href="/#reports">Reports</a><a class="nav-link" href="/#shifts">Shifts</a>
+        <a class="nav-link" href="/#activity">Activity</a>
+      </nav>
+      <form method="post" action="{% url 'logout' %}" class="ml-auto">{% csrf_token %}
+        <button class="btn btn-ghost" title="Sign out">{% include "attendance/partials/_icon.html" with name="logout" %} {{ user.username }}</button>
+      </form>
+      {% endif %}
+    </div>
+  </header>
+  <main class="mx-auto max-w-6xl space-y-6 px-4 py-6">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="mx-auto max-w-6xl px-4 pb-8 text-xs text-slate-400">Times shown are the device's local time. Data stays on your server.</footer>
+</body>
+</html>

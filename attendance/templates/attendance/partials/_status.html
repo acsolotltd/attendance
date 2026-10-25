@@ -1,0 +1,10 @@
+<span id="status-{{ device.id }}"
+      hx-get="{% url 'device_status' device.id %}"
+      hx-trigger="{% if online is None %}load, {% endif %}every 30s"
+      hx-swap="outerHTML"
+      class="chip {% if online is None %}{% elif online %}{% else %}chip-err{% endif %}"
+      style="{% if online %}background:#d1fae5;color:#065f46{% endif %}">
+  <span class="dot mr-1.5 {% if online is None %}animate-pulse{% endif %}" style="background:{% if online is None %}#94a3b8{% elif online %}#10b981{% else %}#ef4444{% endif %}"></span>
+  {% if online is None %}Checking…{% elif online %}Online{% if latency %} · {{ latency }} ms{% endif %}{% else %}Offline{% endif %}
+  {% if online is not None and device.mode == "adms" %}{% if device.last_seen %}· seen {{ device.last_seen|timesince }} ago{% else %}· never seen{% endif %}{% endif %}
+</span>
